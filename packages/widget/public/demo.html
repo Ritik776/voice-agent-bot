@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Wellness - Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f9fafb;
+      color: #1e293b;
+    }
+    header {
+      background: #22c55e;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 22px; }
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 24px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    nav a:hover { opacity: 1; }
+    .hero {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      text-align: center;
+      padding: 80px 32px;
+    }
+    .hero h2 { font-size: 36px; margin-bottom: 12px; }
+    .hero p { font-size: 18px; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+    .products {
+      max-width: 1000px;
+      margin: 48px auto;
+      padding: 0 24px;
+    }
+    .products h3 { font-size: 24px; margin-bottom: 24px; text-align: center; }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .product-item {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .product-item .emoji { font-size: 48px; margin-bottom: 12px; }
+    .product-item h4 { font-size: 16px; margin-bottom: 4px; }
+    .product-item .price { color: #22c55e; font-weight: 700; font-size: 18px; }
+    .product-item p { color: #64748b; font-size: 13px; margin-top: 8px; }
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Reset Wellness</h1>
+    <nav>
+      <a href="#">Products</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h2>Wellness, Backed by Science</h2>
+    <p>Pharma-grade supplements by Venus Remedies. Award-winning formulas for real results.</p>
+  </div>
+
+  <div class="products">
+    <h3>Our Products</h3>
+    <div class="product-grid">
+      <div class="product-item">
+        <div class="emoji">💊</div>
+        <h4>Biotin Gummies</h4>
+        <div class="price">&#8377;599</div>
+        <p>For hairfall control &amp; nail strength. Visible results in 8 weeks.</p>
+      </div>
+      <div class="product-item">
+        <div class="emoji">✨</div>
+        <h4>Marine Collagen</h4>
+        <div class="price">&#8377;1,299</div>
+        <p>Skin glow &amp; anti-aging. Japanese marine collagen peptides.</p>
+      </div>
+      <div class="product-item">
+        <div class="emoji">💪</div>
+        <h4>Pain Relief Tablets</h4>
+        <div class="price">&#8377;349</div>
+        <p>Fast-acting relief for body pain &amp; headaches. Anti-painkiller formula.</p>
+      </div>
+      <div class="product-item">
+        <div class="emoji">🧴</div>
+        <h4>Pain Relief Gel</h4>
+        <div class="price">&#8377;299</div>
+        <p>Topical gel for muscle &amp; joint pain. Quick absorption.</p>
+      </div>
+      <div class="product-item">
+        <div class="emoji">🍬</div>
+        <h4>Detox Candies</h4>
+        <div class="price">&#8377;449</div>
+        <p>Gut health &amp; toxin removal. Tasty way to detox daily.</p>
+      </div>
+      <div class="product-item">
+        <div class="emoji">🔋</div>
+        <h4>Multivitamin Gummies</h4>
+        <div class="price">&#8377;499</div>
+        <p>Daily wellness &amp; energy boost. 12 essential vitamins.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 Reset Wellness by Venus Remedies. This is a demo page for VoiceSell.
+  </footer>
+
+  <!-- VoiceSell Widget -->
+  <script type="module" src="/src/index.tsx" data-merchant="demo" data-api="http://localhost:3001"></script>
+</body>
+</html>

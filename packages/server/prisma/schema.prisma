@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id             String         @id @default(cuid())
+  name           String
+  domain         String         @unique
+  platform       String         // "commercengine" | "shopify" | "woocommerce" | "generic"
+  apiKey         String         @unique
+  config         String         @default("{}") // JSON — bot personality, triggers, widget theme
+  platformConfig String         @default("{}") // JSON — platform-specific credentials (CE store ID, Shopify token, etc.)
+  couponRules    String?        // JSON — discount rules
+  lastSyncAt     DateTime?      // Last product sync timestamp
+  createdAt      DateTime       @default(now())
+  products       Product[]
+  conversations  Conversation[]
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  merchantId    String
+  merchant      Merchant @relation(fields: [merchantId], references: [id])
+  externalId    String?
+  name          String
+  description   String
+  price         Float
+  currency      String   @default("INR")
+  url           String
+  imageUrl      String?
+  category      String?
+  tags          String   @default("[]") // JSON array
+  useCases      String   @default("[]") // JSON array
+  sellingPoints String   @default("[]") // JSON array
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Conversation {
+  id         String              @id @default(cuid())
+  merchantId String
+  merchant   Merchant            @relation(fields: [merchantId], references: [id])
+  sessionId  String
+  language   String?
+  state      String              @default("GREETING")
+  channel    String              @default("text")
+  metadata   String?             // JSON
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  messages   Message[]
+  events     ConversationEvent[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  role           String       // "user" | "assistant"
+  content        String
+  products       String?      // JSON — products mentioned
+  createdAt      DateTime     @default(now())
+}
+
+model ConversationEvent {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  type           String
+  data           String?      // JSON
+  createdAt      DateTime     @default(now())
+}

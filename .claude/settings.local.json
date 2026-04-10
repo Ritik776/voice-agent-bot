@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq node*\")",
+      "Bash(lsof -ti:3001)",
+      "Bash(xargs kill:*)",
+      "Bash(fuser -k 3001/tcp)",
+      "Bash(npx vite:*)",
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/src/index.tsx)",
+      "Bash(curl -s http://localhost:5173/demo.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/src/App.tsx)",
+      "Bash(curl -s -o /dev/null -w \"Widget: %{http_code}\" http://localhost:5173/demo.html)",
+      "Bash(node -e ':*)",
+      "WebFetch(domain:www.commercengine.io)",
+      "Bash(node -e \"process.stdout.write\\('test'\\)\")",
+      "Bash(curl -s http://localhost:3001/api/v1/merchant/demo/products)",
+      "Bash(curl:*)",
+      "Bash(node -e \"1\")",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{const j=JSON.parse\\(d\\);console.log\\('Products: '+j.count\\);j.products.forEach\\(p=>console.log\\('  '+p.name+' - Rs'+p.price+\\(p.imageUrl?' [img]':''\\)\\)\\)}\\)\")",
+      "Bash(node -e \"process.stdin.on\\('data',d=>{const j=JSON.parse\\(d\\);j.data.filter\\(m=>m.active\\).sort\\(\\(a,b\\)=>a.id.localeCompare\\(b.id\\)\\).forEach\\(m=>console.log\\(m.id\\)\\)}\\)\")"
+    ]
+  }
+}

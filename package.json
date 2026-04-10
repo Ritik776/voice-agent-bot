@@ -1,0 +1,26 @@
+{
+  "name": "voicesell",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:server": "npm run dev -w packages/server",
+    "dev:widget": "npm run dev -w packages/widget",
+    "dev:dashboard": "npm run dev -w packages/dashboard",
+    "build": "turbo run build",
+    "build:widget": "npm run build -w packages/widget",
+    "test": "turbo run test",
+    "test:conversation": "npm run test:conversation -w packages/server",
+    "crawl": "tsx packages/server/src/scripts/crawl-products.ts",
+    "seed": "tsx packages/server/src/scripts/seed-reset.ts",
+    "db:migrate": "npm run db:migrate -w packages/server",
+    "db:studio": "npm run db:studio -w packages/server"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}

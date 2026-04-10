@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.next/
+*.db
+*.db-journal
+__pycache__/
+*.pyc
+.env
+.env.local
+.turbo/
+*.tsbuildinfo
+.vscode/
+.idea/
+*.log
