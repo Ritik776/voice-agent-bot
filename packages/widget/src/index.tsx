@@ -10,7 +10,10 @@ import { widgetStyles } from './styles/widget';
   // Get merchant ID from script tag
   const script = document.currentScript as HTMLScriptElement;
   const merchantId = script?.getAttribute('data-merchant') || 'demo';
-  const apiUrl = script?.getAttribute('data-api') || 'http://localhost:3001';
+  // Auto-detect API URL: use data-api attribute, or derive from script src origin, or fallback to localhost
+  const scriptSrc = script?.getAttribute('src') || '';
+  const scriptOrigin = scriptSrc.startsWith('http') ? new URL(scriptSrc).origin : '';
+  const apiUrl = script?.getAttribute('data-api') || scriptOrigin || window.location.origin;
 
   // Create isolated container
   const container = document.createElement('div');

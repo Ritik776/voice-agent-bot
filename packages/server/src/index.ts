@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { prisma } from './db';
@@ -16,6 +17,17 @@ const io = new SocketServer(httpServer, {
 
 app.use(cors());
 app.use(express.json());
+
+// Serve widget static files (production build)
+const widgetDistPath = path.resolve(__dirname, '../../widget/dist');
+app.use('/widget', express.static(widgetDistPath));
+
+// Serve demo page at /demo and at root /
+const widgetPublicPath = path.resolve(__dirname, '../../widget/public');
+app.use('/demo', express.static(widgetPublicPath));
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(widgetPublicPath, 'demo.html'));
+});
 
 // Health check
 app.get('/health', (_req, res) => {
