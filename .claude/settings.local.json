@@ -23,7 +23,23 @@
       "Bash(curl:*)",
       "Bash(node -e \"1\")",
       "Bash(node -e \"process.stdin.on\\('data',d=>{const j=JSON.parse\\(d\\);console.log\\('Products: '+j.count\\);j.products.forEach\\(p=>console.log\\('  '+p.name+' - Rs'+p.price+\\(p.imageUrl?' [img]':''\\)\\)\\)}\\)\")",
-      "Bash(node -e \"process.stdin.on\\('data',d=>{const j=JSON.parse\\(d\\);j.data.filter\\(m=>m.active\\).sort\\(\\(a,b\\)=>a.id.localeCompare\\(b.id\\)\\).forEach\\(m=>console.log\\(m.id\\)\\)}\\)\")"
+      "Bash(node -e \"process.stdin.on\\('data',d=>{const j=JSON.parse\\(d\\);j.data.filter\\(m=>m.active\\).sort\\(\\(a,b\\)=>a.id.localeCompare\\(b.id\\)\\).forEach\\(m=>console.log\\(m.id\\)\\)}\\)\")",
+      "Bash(npm run *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3001)",
+      "Bash(taskkill *)",
+      "Bash(cmd *)",
+      "Bash(edge-tts --version)",
+      "Bash(python -m edge_tts --version)",
+      "Bash(pip show *)",
+      "Bash(pip install *)",
+      "Bash(edge-tts --voice \"hi-IN-SwaraNeural\" --text \"Namaste, main aapki kaise madad kar sakti hoon?\" --write-media /tmp/test_tts.mp3)",
+      "Bash(edge-tts --voice \"hi-IN-SwaraNeural\" --text \"mujhe back pain hori hai\" --write-media /tmp/test_hindi.mp3)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const d=require\\('/dev/stdin'\\);console.log\\(JSON.stringify\\(d.scripts,null,2\\)\\)\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const j=JSON.parse\\(d\\);console.log\\('convId:',j.conversationId\\)\")"
     ]
   }
 }

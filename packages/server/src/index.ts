@@ -7,6 +7,7 @@ import { Server as SocketServer } from 'socket.io';
 import { prisma } from './db';
 import { conversationRouter } from './routes/conversation';
 import { merchantRouter } from './routes/merchant';
+import { voiceRouter } from './routes/voice';
 import { setupVoiceSocket } from './voice/socket-handler';
 
 const app = express();
@@ -37,6 +38,7 @@ app.get('/health', (_req, res) => {
 // API routes
 app.use('/api/v1/conversation', conversationRouter);
 app.use('/api/v1/merchant', merchantRouter);
+app.use('/api/v1/voice', voiceRouter);
 
 // WebSocket — voice pipeline
 setupVoiceSocket(io);

@@ -26,7 +26,9 @@ const DEFAULT_CONFIG: MerchantConfig = {
 export function App({ merchantId, apiUrl }: AppProps) {
   const [widgetState, setWidgetState] = useState<WidgetState>('hidden');
   const [config, setConfig] = useState<MerchantConfig>(DEFAULT_CONFIG);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(
+    () => sessionStorage.getItem('vs_conv_id')
+  );
 
   // Fetch merchant config
   useEffect(() => {
@@ -47,15 +49,18 @@ export function App({ merchantId, apiUrl }: AppProps) {
       });
   }, [merchantId, apiUrl]);
 
-  // Trigger logic
+  // Trigger logic — only fires once per session, never after user has chatted
   useEffect(() => {
     if (widgetState !== 'hidden') return;
+    if (conversationId) return; // already chatted — don't interrupt again
+    if (sessionStorage.getItem('vs_triggered')) return;
 
     const timers: number[] = [];
 
     for (const trigger of config.triggers) {
       if (trigger.type === 'time') {
         const t = window.setTimeout(() => {
+          sessionStorage.setItem('vs_triggered', '1');
           setWidgetState('consent');
         }, trigger.delay || 5000);
         timers.push(t);
@@ -67,6 +72,7 @@ export function App({ merchantId, apiUrl }: AppProps) {
           const scrolled =
             (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
           if (scrolled >= pct) {
+            sessionStorage.setItem('vs_triggered', '1');
             setWidgetState('consent');
             window.removeEventListener('scroll', handler);
           }
@@ -78,6 +84,7 @@ export function App({ merchantId, apiUrl }: AppProps) {
       if (trigger.type === 'exit_intent') {
         const handler = (e: MouseEvent) => {
           if (e.clientY < 10) {
+            sessionStorage.setItem('vs_triggered', '1');
             setWidgetState('consent');
             document.removeEventListener('mouseout', handler);
           }
@@ -106,6 +113,7 @@ export function App({ merchantId, apiUrl }: AppProps) {
       });
       const data = await res.json();
       setConversationId(data.conversationId);
+      sessionStorage.setItem('vs_conv_id', data.conversationId);
       setWidgetState('chat');
     } catch {
       // Still open chat with fallback
@@ -123,23 +131,15 @@ export function App({ merchantId, apiUrl }: AppProps) {
 
   // Floating button to reopen
   const handleReopen = () => {
-    if (conversationId) {
-      setWidgetState('chat');
-    } else {
-      setWidgetState('consent');
-    }
+    setWidgetState(conversationId ? 'chat' : 'consent');
   };
 
   if (widgetState === 'hidden') {
     return (
-      <button
-        class="vs-fab"
-        onClick={handleReopen}
-        style={themeStyle}
-        aria-label="Open chat assistant"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <button class="vs-fab" onClick={handleReopen} style={themeStyle} aria-label="Open chat assistant">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          <line x1="9" y1="10" x2="15" y2="10" /><line x1="9" y1="14" x2="13" y2="14" />
         </svg>
       </button>
     );

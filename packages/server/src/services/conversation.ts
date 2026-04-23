@@ -19,7 +19,7 @@ enum ConversationState {
 
 const TRANSITIONS: Record<ConversationState, ConversationState[]> = {
   [ConversationState.IDLE]: [ConversationState.GREETING],
-  [ConversationState.GREETING]: [ConversationState.CONSENT, ConversationState.DISCOVERY],
+  [ConversationState.GREETING]: [ConversationState.CONSENT, ConversationState.DISCOVERY, ConversationState.RECOMMENDATION],
   [ConversationState.CONSENT]: [ConversationState.DISCOVERY, ConversationState.SOFT_EXIT],
   [ConversationState.DISCOVERY]: [ConversationState.RECOMMENDATION, ConversationState.DISCOVERY],
   [ConversationState.RECOMMENDATION]: [
@@ -59,8 +59,14 @@ function buildSystemPrompt(
 ): string {
   const allowedTransitions = TRANSITIONS[currentState] || [];
 
-  return `You are a friendly, knowledgeable wellness consultant for ${merchantName}.
-You help customers find the right products by understanding their needs first.
+  return `You are Priya — a warm, knowledgeable female wellness consultant for ${merchantName}.
+
+## Your identity (IMPORTANT)
+- You are FEMALE. Always use female Hindi grammar without exception.
+- Say "kar rahi hoon", "bata rahi hoon", "samajh rahi hoon" — NEVER "kar raha hoon"
+- Say "main Priya hoon" — not "main Priya hun" or "hoon main"
+- Use "mujhe lagta hai", "main soch rahi hoon" etc. — always female forms
+- Your name is Priya
 
 ## Your personality
 - Warm and empathetic — you genuinely care about the customer's health
@@ -73,24 +79,36 @@ You help customers find the right products by understanding their needs first.
 - If the customer speaks Hindi, respond in Hindi
 - If they mix Hindi + English (Hinglish), respond in Hinglish
 - If they speak English, respond in English
-- For other languages, respond in that language
 - Keep responses conversational, not formal
-- TEXT MODE: be concise, max 3-4 sentences per response
+- Be concise — max 3-4 sentences per response
 
-## Sales approach
-1. LISTEN first — understand what they need
-2. EDUCATE — explain the science/reason simply
-3. RECOMMEND — suggest 1-2 products max (not 5)
-4. CONSENT — "Kya main iske fayde bataun?" before deep-diving
-5. HANDLE OBJECTIONS — with empathy, not aggression
-   - Price objection → explain value per day, compare to alternatives
-   - Trust objection → mention pharma backing, awards, reviews
-   - Need objection → relate to their specific symptom
-6. CLOSE gently — "Aap chahein toh main cart mein add kar dun?"
-7. URGENCY (only if interest is dropping) — "Aapke liye ek special offer hai, limited time..."
+## PRODUCT CARD SYSTEM — READ THIS CAREFULLY
+When you output [STATE:RECOMMENDATION], the UI automatically displays product cards showing:
+- Product image, name, price, key selling points, and a "View Product" button
+
+You do NOT need to list products, describe them, or share URLs in your text.
+Just write a short 1-sentence intro ("Yeh rahi kuch options jo aapke liye sahi ho sakti hain:") and output [STATE:RECOMMENDATION].
+NEVER describe products in bullet points. NEVER make up product details. Cards handle everything.
+
+## Conversation flow — follow this strictly
+- GREETING: Greet warmly. Ask what brought them here. DO NOT mention any product names yet.
+- CONSENT: Ask if they'd like your help. DO NOT name or hint at any product.
+- DISCOVERY: Ask at most ONE follow-up question. If user already named a product or said what they want, skip straight to RECOMMENDATION.
+- RECOMMENDATION: Write ONE short sentence, then output [STATE:RECOMMENDATION]. The UI shows the cards.
+- EDUCATION: Explain ONE benefit from the product's selling points when asked. Keep it to 2 sentences max.
+- OBJECTION_HANDLING: Address concerns with empathy — price (value per day), trust (pharma backing, awards), urgency (limited offer).
+- CLOSING: Gently ask "Aap chahein toh main link share karun?"
+
+## Fast-track to RECOMMENDATION (IMPORTANT)
+Skip DISCOVERY entirely and output [STATE:RECOMMENDATION] immediately if the user:
+- Mentions a specific product by name (e.g., "marine collagen", "instant ease", "soothing gel")
+- Uses show-intent words: "dikha", "dikhao", "show", "product chahiye", "lena hai", "kharidna"
+- Has already described their problem in a previous message and now says "yes", "haan", "theek hai", "okay"
+Do NOT ask more questions. Show products immediately.
 
 ## Things you NEVER do
-- Never make up product information
+- NEVER describe a product not in the PRODUCT CATALOG below — no "herbal supplement", no "ayurvedic medicine", nothing generic
+- NEVER invent ingredients, benefits, or usage instructions — only use what's in the product's description and selling points
 - Never claim a product cures diseases
 - Never push after the customer says no
 - Never share other customers' information
@@ -139,7 +157,7 @@ function parseStateFromResponse(
   response: string,
   currentState: ConversationState
 ): { message: string; nextState: ConversationState } {
-  const stateRegex = /\[STATE:(\w+)\]\s*$/;
+  const stateRegex = /\[STATE:\s*(\w+)\]\s*$/;
   const match = response.match(stateRegex);
 
   let nextState = currentState;
@@ -147,7 +165,7 @@ function parseStateFromResponse(
 
   if (match) {
     const parsed = match[1] as ConversationState;
-    message = response.replace(stateRegex, '').trim();
+    message = response.replace(/\[STATE:\s*\w+\]/gi, '').trim();
 
     // Validate transition
     const allowed = TRANSITIONS[currentState];
@@ -244,18 +262,18 @@ export async function processMessage(
     },
   });
 
-  // Match products if in DISCOVERY or related states
-  let matchedProducts: ProcessMessageResult['products'] = undefined;
-  const discoveryStates: ConversationState[] = [
-    ConversationState.DISCOVERY,
-    ConversationState.GREETING,
-    ConversationState.CONSENT,
-  ];
+  // Load previously matched products from conversation metadata
+  const convMeta = JSON.parse(conversation.metadata || '{}');
+  let persistedProducts: ProcessMessageResult['products'] = convMeta.matchedProducts || undefined;
 
-  if (discoveryStates.includes(currentState)) {
+  // Always attempt product matching — state doesn't matter, user can ask at any point
+  let matchedProducts: ProcessMessageResult['products'] = persistedProducts;
+  const notYetRecommended = currentState !== ConversationState.SUCCESS;
+  if (notYetRecommended) {
     const products = await matchProducts(message, conversation.merchantId);
     if (products.length > 0) {
       matchedProducts = products;
+      persistedProducts = products;
     }
   }
 
@@ -282,20 +300,27 @@ export async function processMessage(
     context.objections
   );
 
-  // Inject product context if we have matches
+  // Inject product context for all post-discovery states
+  const postDiscoveryStates = [
+    ConversationState.RECOMMENDATION,
+    ConversationState.EDUCATION,
+    ConversationState.OBJECTION_HANDLING,
+    ConversationState.CLOSING,
+    ConversationState.SUCCESS,
+  ];
   let productContext = '';
   if (matchedProducts && matchedProducts.length > 0) {
-    productContext = '\n\n## Available products matching this customer\'s needs:\n';
+    productContext = '\n\n## PRODUCT CATALOG — ONLY discuss these products. Do NOT mention, invent, or describe any other product, supplement, or remedy.\n';
     for (const p of matchedProducts) {
       productContext += `\n### ${p.name} (₹${p.price})`;
       productContext += `\n${p.description}`;
       if (p.sellingPoints?.length > 0) {
-        productContext += `\nSelling points: ${p.sellingPoints.join(', ')}`;
+        productContext += `\nKey selling points: ${p.sellingPoints.join(' | ')}`;
       }
-      productContext += `\nURL: ${p.url}`;
-      if (p.imageUrl) productContext += `\nImage: ${p.imageUrl}`;
-      productContext += `\nMatch reason: ${p.matchReason}\n`;
+      productContext += `\nProduct URL: ${p.url}`;
+      productContext += `\nWhy it matches: ${p.matchReason}\n`;
     }
+    productContext += '\n\n⚠️ STRICT RULE: You must ONLY describe the products listed above. Use their exact names, prices, and selling points. Never say "herbal supplement", "ayurvedic medicine", or make up any ingredient/benefit not listed above.';
   }
 
   const fullSystemPrompt = systemPrompt + productContext;
@@ -308,10 +333,32 @@ export async function processMessage(
   );
 
   // Parse state transition from response
-  const { message: botMessage, nextState } = parseStateFromResponse(
+  const { message: botMessage, nextState: parsedState } = parseStateFromResponse(
     llmResponse,
     currentState
   );
+  let nextState = parsedState;
+
+  // Server-side override: if user says "show product" in any form, force RECOMMENDATION
+  const showIntentWords = ['dikha', 'dikhao', 'show', 'product de', 'products de', 'lena hai', 'buy', 'kharid', 'dekh', 'de na', 'bata', 'kaunsa'];
+  const lowerMsg = message.toLowerCase();
+  if (showIntentWords.some((w) => lowerMsg.includes(w)) && matchedProducts && matchedProducts.length > 0) {
+    // Force RECOMMENDATION regardless of FSM state — user has explicitly asked to see products
+    nextState = ConversationState.RECOMMENDATION;
+  }
+
+  // If entering RECOMMENDATION but products still empty, re-match using full conversation history
+  if (nextState === ConversationState.RECOMMENDATION && !matchedProducts) {
+    const allUserText = [
+      ...history.filter((m) => m.role === 'user').map((m) => m.content),
+      message,
+    ].join(' ');
+    const products = await matchProducts(allUserText, conversation.merchantId);
+    if (products.length > 0) {
+      matchedProducts = products;
+      persistedProducts = products;
+    }
+  }
 
   // Save bot message
   await prisma.message.create({
@@ -323,18 +370,27 @@ export async function processMessage(
     },
   });
 
-  // Update conversation state and language
+  // Update conversation state, language, and persist matched products
+  const updatedMeta = { ...convMeta };
+  if (persistedProducts && persistedProducts.length > 0) {
+    updatedMeta.matchedProducts = persistedProducts;
+  }
   await prisma.conversation.update({
     where: { id: conversationId },
     data: {
       state: nextState,
       language: detectedLanguage || conversation.language,
+      metadata: JSON.stringify(updatedMeta),
     },
   });
 
+  // Only surface product cards in UI when entering RECOMMENDATION state
+  const showProducts = nextState === ConversationState.RECOMMENDATION
+    || currentState === ConversationState.RECOMMENDATION;
+
   return {
     message: botMessage,
-    products: matchedProducts,
+    products: showProducts ? matchedProducts : undefined,
     state: nextState,
     language: detectedLanguage || conversation.language,
   };
